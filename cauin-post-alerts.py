@@ -17,8 +17,6 @@ with open("info.txt", "r") as f:
     password = f.readline()
     telegram_bot_token = f.readline()
 
-print(telegram_bot_token)
-
 # Information of telegram bot
 bot = telegram.Bot(token=telegram_bot_token)
 chat_id = bot.getUpdates()[-1].message.chat.id
@@ -69,7 +67,7 @@ while True:
 
     # If there is no new post, continue
     if present_title == previous_title:
-        print("Present title:", present_title)
+        print("Present title:", present_title, time.strftime("%c", time.localtime(time.time())))
         time.sleep(10)
         continue
 
@@ -81,11 +79,6 @@ while True:
     title = post_page.select("#content > div.viewzone > div.topbox > h2")[0].text
     date = post_page.select("#content > div.viewzone > div.topbox > div.detailbox > ul > li.date > em")[0].text
     content = post_page.select("#content > div.viewzone > div.contentbox > div")[0].text
-
-    # print(post_page)
-    print("Title:", title)
-    print("Date:", date)
-    print("Content:", content)
 
     text = "Title: " + title + "\n\n" + "Date:" + date + "\n\n" + "Content:" + content
     bot.sendMessage(chat_id=chat_id, text=text)
