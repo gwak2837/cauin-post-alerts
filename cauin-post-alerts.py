@@ -11,17 +11,17 @@ def get_html(url):
     return BeautifulSoup(driver.page_source, "html.parser")
 
 
-# Get ID and password
+# Get ID and password from 'info.txt'
 with open("info.txt", "r") as f:
     userID = f.readline()
     password = f.readline()
     telegram_bot_token = f.readline()
 
-# Information of telegram bot
+# Connect to the telegram bot
 bot = telegram.Bot(token=telegram_bot_token)
 chat_id = bot.getUpdates()[-1].message.chat.id
 
-# Option setting
+# Setting chrome options
 options = webdriver.ChromeOptions()
 options.add_argument("headless")
 options.add_argument("disable-gpu")
@@ -53,37 +53,43 @@ driver.find_element_by_xpath('//*[@id="frmLogon"]/div/div/button').click()
 while True:
     root_page = BeautifulSoup(driver.page_source, "html.parser")
     try:
-        previous_title = root_page.select("#aside > div > div > ul > li:nth-child(1) > a > span")[0].text
+        old_title = root_page.select("#aside > div > div > ul > li:nth-child(1) > a > span")[0].text
         break
     except IndexError:
         time.sleep(3)
 
-# Get the latest post
-print("Previous title:", previous_title)
-
+# Scrape a new post
+scrapping_period = 10
 while True:
     root_page = get_html("https://cauin.cau.ac.kr/cauin/")
-    present_title = root_page.select("#aside > div > div > ul > li:nth-child(1) > a > span")[0].text
+    latest_title = root_page.select("#aside > div > div > ul > li:nth-child(1) > a > span")[0].text
 
     # If there is no new post, continue
-    if present_title == previous_title:
-        print("Present title:", present_title, time.strftime("%c", time.localtime(time.time())))
-        time.sleep(10)
+    if latest_title == old_title:
+        print("Latest title:", latest_title, time.strftime("%c", time.localtime(time.time())))
+        time.sleep(scrapping_period)
         continue
 
     # If there is a new post
-    present_post_link = (
-        "https://cauin.cau.ac.kr" + root_page.select("#aside > div > div > ul > li:nth-child(1) > a")[0].attrs["href"]
-    )
-    post_page = get_html(present_post_link)
-    title = post_page.select("#content > div.viewzone > div.topbox > h2")[0].text
-    date = post_page.select("#content > div.viewzone > div.topbox > div.detailbox > ul > li.date > em")[0].text
-    content = post_page.select("#content > div.viewzone > div.contentbox > div")[0].text
+    for i in range(1, 10):
+        if root_page.select("#aside > div > div > ul > li:nth-child(" + str(i) + ") > a > span")[0].text == old_title:
+            break
 
-    text = "Title: " + title + "\n\n" + "Date:" + date + "\n\n" + "Content:" + content
-    bot.sendMessage(chat_id=chat_id, text=text)
-    print(text)
-    time.sleep(10)
+        present_post_link = (
+            "https://cauin.cau.ac.kr"
+            + root_page.select("#aside > div > div > ul > li:nth-child(" + str(i) + ") > a")[0].attrs["href"]
+        )
+        post_page = get_html(present_post_link)
+        title = post_page.select("#content > div.viewzone > div.topbox > h2")[0].text
+        date = post_page.select("#content > div.viewzone > div.topbox > div.detailbox > ul > li.date > em")[0].text
+        content = post_page.select("#content > div.viewzone > div.contentbox > div")[0].text
+
+        text = "Title: " + title + "\n\n" + "Date:" + date + "\n\n" + "Content:" + content
+        bot.sendMessage(chat_id=chat_id, text=text)
+        print(text)
+
+    old_title = latest_title
+    time.sleep(scrapping_period)
 
 
 driver.quit()
