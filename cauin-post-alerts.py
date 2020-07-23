@@ -33,7 +33,7 @@ options.add_argument("lang=ko_KR")
 options.add_argument("log-level=2")
 
 # Create chrome driver
-driver = webdriver.Chrome("chromedriver", options=options)
+driver = webdriver.Chrome("./chromedriver", options=options)
 driver.implicitly_wait(10)
 driver.execute_script("Object.defineProperty(navigator, 'plugins', {get: function() {return[1, 2, 3, 4, 5]}})")
 driver.execute_script("Object.defineProperty(navigator, 'languages', {get: function() {return ['ko-KR', 'ko']}})")
@@ -66,7 +66,9 @@ while True:
 
     # If there is no new post, continue
     if latest_title == old_title:
-        print("Latest title:", latest_title, time.strftime("%c", time.localtime(time.time())))
+        print(
+            "Latest title:", latest_title, time.strftime("%c", time.localtime(time.time())),
+        )
         time.sleep(scrapping_period)
         continue
 
